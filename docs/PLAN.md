@@ -33,7 +33,7 @@ Open follow-ups (not started): deploy to Vercel (steps in README), client-side d
 
 Take-home assessment for a fullstack role: a web app where a user registers, uploads a photo, and gets a "smile score". The reviewers care most about **solution structure and testing**. The code should read like a solid lower-mid fullstack engineer wrote it: clear layering, small modules, no over-engineering, honest README.
 
-Working directory `/Users/fairuzlokman/Desktop/fullstack` is empty (not a git repo). Node 22.21 is installed (required: face-api/tfjs does not support Node 23+).
+Working directory `/Users/fairuzlokman/Desktop/smiley` is empty (not a git repo). Node 22.21 is installed (required: face-api/tfjs does not support Node 23+).
 
 ### Decisions (confirmed with user)
 | Concern | Choice | Why |
@@ -66,7 +66,7 @@ Analyze **before** storing so bad images (no face) never hit Blob or the DB.
 ## Project structure
 
 ```
-fullstack/
+smiley/
 ├─ src/
 │  ├─ app/
 │  │  ├─ layout.tsx, globals.css
