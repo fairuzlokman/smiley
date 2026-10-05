@@ -13,7 +13,8 @@ const envSchema = z.object({
   JWT_SECRET: z
     .string()
     .min(32, "JWT_SECRET must be at least 32 characters"),
-  BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  // Injected by Vercel when a Blob store is connected. The SDK authenticates with the platform OIDC token.
+  BLOB_STORE_ID: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

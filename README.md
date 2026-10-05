@@ -15,8 +15,8 @@ npm run db:migrate              # creates local.db with the schema
 npm run dev                     # http://localhost:3000
 ```
 
-That is enough to run everything locally: the database is a SQLite file and, when no
-`BLOB_READ_WRITE_TOKEN` is set, uploads are written to `public/uploads/` (development only).
+That is enough to run everything locally: the database is a SQLite file and, when Vercel Blob
+is not configured, uploads are written to `public/uploads/` (development only).
 
 ```bash
 npm test          # unit + integration tests (in-memory SQLite, analyzer/storage mocked)
@@ -93,13 +93,15 @@ labels, blur validation, inline errors wired with `aria-describedby`, loading st
 ## Deploying to Vercel
 
 1. Push the repo and import it in Vercel. Set the project's Node.js version to **22.x**.
-2. **Storage → Blob**: create a store and connect it; this injects `BLOB_READ_WRITE_TOKEN`.
+2. **Storage → Blob**: create a **public** store and connect it. Vercel injects `BLOB_STORE_ID`;
+   the SDK authenticates with the platform OIDC token, so no read-write token is needed.
 3. **Marketplace → Turso**: create a database and connect it; this injects
    `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`.
 4. Add `JWT_SECRET` (≥ 32 random characters).
 5. Apply the schema once against the hosted database:
    `TURSO_DATABASE_URL=libsql://… TURSO_AUTH_TOKEN=… npm run db:migrate`
-6. Deploy. `next.config.ts` marks face-api/TensorFlow/sharp as external and traces the
+6. Deploy (or **Redeploy** if the project already existed: new environment variables only reach a
+   fresh deployment). `next.config.ts` marks face-api/TensorFlow/sharp as external and traces the
    `weights/` folder and the `.wasm` binaries into the `/api/uploads` function.
 
 ## Assumptions

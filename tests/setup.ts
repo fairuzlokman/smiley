@@ -3,4 +3,4 @@
 process.env.TURSO_DATABASE_URL = ":memory:";
 process.env.TURSO_AUTH_TOKEN = "";
 process.env.JWT_SECRET = "test-secret-that-is-definitely-longer-than-32-chars";
-process.env.BLOB_READ_WRITE_TOKEN = "";
+process.env.BLOB_STORE_ID = "";

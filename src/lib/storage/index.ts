@@ -7,7 +7,7 @@ let instance: ImageStorage | undefined;
 
 /**
  * Single entry point so route handlers (and tests, via vi.mock) don't care which backend is used.
- * Vercel Blob whenever a token is configured; otherwise local disk in development only.
+ * Vercel Blob whenever it is configured; otherwise local disk in development only.
  */
 export function getStorage(): ImageStorage {
   if (!instance) instance = createStorage();
@@ -16,11 +16,11 @@ export function getStorage(): ImageStorage {
 
 function createStorage(): ImageStorage {
   const env = getEnv();
-  if (env.BLOB_READ_WRITE_TOKEN) return new VercelBlobStorage();
+  if (env.BLOB_STORE_ID) return new VercelBlobStorage();
   if (env.NODE_ENV === "production") {
-    throw new Error("BLOB_READ_WRITE_TOKEN is required in production.");
+    throw new Error("BLOB_STORE_ID is required in production (connect a Blob store to the Vercel project).");
   }
-  console.warn("BLOB_READ_WRITE_TOKEN not set: storing uploads in public/uploads (development only).");
+  console.warn("BLOB_STORE_ID not set: storing uploads in public/uploads (development only).");
   return new LocalDiskStorage();
 }
 
