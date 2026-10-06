@@ -24,7 +24,7 @@ const face = (happy: number, size = 100): DetectedFace => ({
 });
 
 describe("happinessToScore", () => {
-  it("maps a probability to a 0–100 integer", () => {
+  it("maps a probability to a 0-100 integer", () => {
     expect(happinessToScore(0)).toBe(0);
     expect(happinessToScore(0.5)).toBe(50);
     expect(happinessToScore(0.987)).toBe(99);
