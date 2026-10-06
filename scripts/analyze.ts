@@ -1,6 +1,6 @@
 /**
  * Manual smoke test for the analyzer, outside of Next.js:
- *   npx tsx scripts/analyze.ts path/to/photo.jpg
+ *   npm run analyze <path-to-your-image>
  */
 import fs from "node:fs/promises";
 import { FaceApiAnalyzer } from "@/lib/smile/faceApiAnalyzer";
@@ -9,11 +9,17 @@ import { NoFaceError } from "@/lib/smile/types";
 async function main() {
   const file = process.argv[2];
   if (!file) {
-    console.error("Usage: npx tsx scripts/analyze.ts <image>");
+    console.error("Usage: npm run analyze <path-to-your-image>");
+    process.exit(1);
+  }
+  let image: Buffer;
+  try {
+    image = await fs.readFile(file);
+  } catch {
+    console.error(`File not found: ${file}\nUsage: npm run analyze <path-to-your-image>`);
     process.exit(1);
   }
   const analyzer = new FaceApiAnalyzer();
-  const image = await fs.readFile(file);
   const started = Date.now();
   try {
     const result = await analyzer.analyze(image);
