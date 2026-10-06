@@ -112,6 +112,41 @@ tests/            unit/ and integration/ (Vitest)
 - Email + password only (8+ characters), no email verification or password reset.
 - Light theme only.
 
+## Next steps
+
+- **Delete uploads**: a delete button per photo that removes the DB row and the Blob file (`blobPathname` is already stored for this).
+- **Rate limiting** on login and upload, to stop password guessing and abuse of the face model.
+- **Access + refresh tokens**: a short-lived JWT access token (~15 min) plus a rotating refresh token stored in the database, so sessions can be revoked and a leaked token expires quickly.
+- **Direct browser → Blob upload**: removes the 4 MB limit and keeps large files off the server.
+- **Use `next/image`** in the upload history for resized, lazy-loaded images.
+- **One Playwright test** for register → upload → see score in a real browser, against a production build.
+- **Replace `@vladmandic/face-api`** (archived Feb 2025) with `@vladmandic/human` behind the same `SmileAnalyzer` interface.
+
+### What I would do differently with more time
+
+**Move the heavy work off the request path.** Analysis runs inside the upload request.
+That is fine at ~100–300 ms per image once warm, but a cold Vercel function pays for
+loading TensorFlow and the weights. With more time I would upload straight from the
+browser to Blob, enqueue a job, and let the dashboard poll or stream the result. It also
+removes the 4 MB body cap.
+
+**Replace face-api.** It still works well, but the project is archived. `@vladmandic/human`
+is maintained by the same author and exposes the same expression outputs, so the swap is
+contained to `src/lib/smile/faceApiAnalyzer.ts`. I would also add a small benchmark set of
+labelled photos to catch regressions when swapping models or thresholds.
+
+**Harden auth.** Short-lived access token plus a rotating refresh token, a per-IP/per-user
+rate limit on login and upload, and account deletion (which also deletes Blob files). If
+social login became a requirement I would move to Auth.js rather than extend the
+hand-rolled version.
+
+**More test layers.** One Playwright journey (register → upload → see score) against a
+production build, and a contract test for the real `FaceApiAnalyzer` on a couple of fixture
+images, kept out of the default `npm test` so unit tests stay fast.
+
+**Product polish.** Image moderation before storing, a history page with pagination and
+delete, an explanation of which face was scored (draw the box on the preview), and dark mode.
+
 ## Deploy to Vercel
 
 1. Import the repo in Vercel and set Node.js to **22.x**.
