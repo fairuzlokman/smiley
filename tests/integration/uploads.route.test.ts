@@ -7,10 +7,11 @@ import { NoFaceError, type SmileResult } from "@/lib/smile/types";
 import { setupTestDatabase } from "./helpers/db";
 import { fakeImage, getRequest, multipartRequest, sessionCookie } from "./helpers/request";
 
-// The real analyzer loads TensorFlow and the storage talks to Vercel Blob.
-// Both sit behind a small interface, so the route is tested with fakes.
+// The real analyzer loads TensorFlow, the storage talks to Vercel Blob and the coach calls Gemini.
+// All sit behind a small module boundary, so the route is tested with fakes.
 const analyze = vi.fn<(image: Buffer) => Promise<SmileResult>>();
 const upload = vi.fn();
+const generateCoachFeedback = vi.fn<(result: SmileResult) => Promise<string>>();
 
 vi.mock("@/lib/smile", async () => {
   const actual = await vi.importActual<typeof import("@/lib/smile/types")>("@/lib/smile/types");
@@ -19,6 +20,10 @@ vi.mock("@/lib/smile", async () => {
     getAnalyzer: async () => ({ analyze }),
   };
 });
+
+vi.mock("@/lib/coach", () => ({
+  generateCoachFeedback: (result: SmileResult) => generateCoachFeedback(result),
+}));
 
 vi.mock("@/lib/storage", () => ({
   getStorage: () => ({ upload }),
@@ -42,7 +47,9 @@ async function createSessionFor(email: string) {
 beforeEach(() => {
   analyze.mockReset();
   upload.mockReset();
+  generateCoachFeedback.mockReset();
   analyze.mockResolvedValue(happyResult);
+  generateCoachFeedback.mockResolvedValue("Great smile! Keep it up.");
   upload.mockResolvedValue({
     url: "https://blob.example.com/uploads/photo.jpg",
     pathname: "uploads/photo.jpg",
@@ -93,6 +100,7 @@ describe("POST /api/uploads", () => {
     expect((await res.json()).error).toMatch(/no face/i);
 
     expect(upload).not.toHaveBeenCalled();
+    expect(generateCoachFeedback).not.toHaveBeenCalled(); // no tokens spent on rejected photos
     expect(await listUploadsByUser(user.id)).toHaveLength(0);
   });
 
@@ -108,8 +116,10 @@ describe("POST /api/uploads", () => {
       label: "Big smile",
       imageUrl: "https://blob.example.com/uploads/photo.jpg",
       expressions: happyResult.expressions,
+      coach: "Great smile! Keep it up.",
     });
     expect(body.faceCount).toBe(1);
+    expect(generateCoachFeedback).toHaveBeenCalledWith(happyResult);
 
     expect(analyze).toHaveBeenCalledTimes(1);
     expect(Buffer.isBuffer(analyze.mock.calls[0][0])).toBe(true);
@@ -122,6 +132,22 @@ describe("POST /api/uploads", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].score).toBe(87);
     expect(rows[0].blobPathname).toBe("uploads/photo.jpg");
+    expect(rows[0].coach).toBe("Great smile! Keep it up.");
+  });
+
+  it("still saves the upload, without coach feedback, when the coach fails", async () => {
+    generateCoachFeedback.mockRejectedValueOnce(new Error("Gemini is down"));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { user, cookie } = await createSessionFor("a@example.com");
+
+    const res = await POST(multipartRequest("/api/uploads", { image: fakeImage() }, cookie));
+    expect(res.status).toBe(201);
+    expect((await res.json()).upload).toMatchObject({ score: 87, coach: null });
+
+    const rows = await listUploadsByUser(user.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].coach).toBeNull();
+    warn.mockRestore();
   });
 
   it("returns 500 without leaking details when the analyzer crashes", async () => {

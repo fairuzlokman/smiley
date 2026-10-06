@@ -13,9 +13,11 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:studio": "drizzle-kit studio",
-    "analyze": "tsx scripts/analyze.ts"
+    "analyze": "tsx scripts/analyze.ts",
+    "tips:embed": "tsx scripts/embed-tips.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.27.0",
     "@libsql/client": "^0.18.0",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-wasm": "^4.22.0",

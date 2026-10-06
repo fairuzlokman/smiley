@@ -18,6 +18,7 @@ export default async function DashboardPage() {
     score: row.score,
     label: row.label,
     expressions: JSON.parse(row.expressions) as Record<string, number>,
+    coach: row.coach,
     createdAt: row.createdAt.toISOString(),
   }));
 

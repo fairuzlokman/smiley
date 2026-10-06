@@ -82,7 +82,7 @@ export function UploadForm({ onUploaded }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-bold">Upload a photo</h2>
+        <h2 id="upload-heading" className="text-lg font-bold">Upload a photo</h2>
         <p className="text-sm text-muted-foreground">
           A clear, front-facing photo works best. We score the biggest face in the picture.
         </p>

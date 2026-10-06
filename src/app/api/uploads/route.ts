@@ -1,4 +1,5 @@
 import { getUserFromRequest } from "@/lib/auth/currentUser";
+import { generateCoachFeedback } from "@/lib/coach";
 import { ApiError, json, jsonError } from "@/lib/http";
 import { createUpload, listUploadsByUser } from "@/lib/repositories/uploads";
 import { getAnalyzer, NoFaceError } from "@/lib/smile";
@@ -34,6 +35,14 @@ export async function POST(request: Request) {
       userId: user.userId,
     });
 
+    // The coach is optional: if Gemini is down or not configured, the upload still succeeds without it.
+    let coach: string | null = null;
+    try {
+      coach = await generateCoachFeedback(result);
+    } catch (err) {
+      console.warn("Coach skipped:", err instanceof Error ? err.message : err);
+    }
+
     const upload = await createUpload({
       userId: user.userId,
       imageUrl: stored.url,
@@ -41,6 +50,7 @@ export async function POST(request: Request) {
       score: result.score,
       label: result.label,
       expressions: result.expressions,
+      coach,
     });
 
     return json({ upload: toDto(upload), faceCount: result.faceCount }, { status: 201 });
@@ -81,6 +91,7 @@ export type UploadDto = {
   score: number;
   label: string;
   expressions: Record<string, number>;
+  coach: string | null;
   createdAt: string;
 };
 
@@ -90,6 +101,7 @@ function toDto(row: {
   score: number;
   label: string;
   expressions: string;
+  coach: string | null;
   createdAt: Date;
 }): UploadDto {
   return {
@@ -98,6 +110,7 @@ function toDto(row: {
     score: row.score,
     label: row.label,
     expressions: JSON.parse(row.expressions),
+    coach: row.coach,
     createdAt: row.createdAt.toISOString(),
   };
 }

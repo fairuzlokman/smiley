@@ -21,6 +21,8 @@ export const uploads = sqliteTable(
     label: text("label").notNull(),
     /** JSON string of the 7 expression probabilities, kept for debugging/explainability. */
     expressions: text("expressions").notNull(),
+    /** LLM feedback, generated once at upload time. Null when the coach was unavailable. */
+    coach: text("coach"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [index("uploads_user_id_idx").on(table.userId)],

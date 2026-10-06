@@ -9,6 +9,7 @@ export type CreateUploadInput = {
   score: number;
   label: string;
   expressions: Record<string, number>;
+  coach?: string | null;
 };
 
 export async function createUpload(
@@ -23,6 +24,7 @@ export async function createUpload(
     score: input.score,
     label: input.label,
     expressions: JSON.stringify(input.expressions),
+    coach: input.coach ?? null,
     createdAt: new Date(),
   };
   await db.insert(uploads).values(row);
